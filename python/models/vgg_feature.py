@@ -64,7 +64,7 @@ if __name__ == "__main__":
         pool_size=3
     ), input_to_model=torch.randn((10, 3, 321, 321), dtype=torch.float32))
 
-
+    print("Graph has been writen to the temp dir")
 
 
 
