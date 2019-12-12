@@ -4,7 +4,7 @@
 @author: Xiaobo Yang
 @contact: hal_42@zju.edu.cn
 @software: PyCharm
-@file: ASPP.py
+@file: vgg_ASPP.py
 @time: 2019/12/12 16:02
 @desc:
 """
@@ -27,10 +27,10 @@ class FCReLUDrop(nn.Sequential):
                         nn.Dropout(p=0.5))
 
 
-class ASPPBranch(nn.Sequential):
+class VGGASPPBranch(nn.Sequential):
 
     def __init__(self, in_ch, num_classes, rate, start_layer_idx, branch_idx):
-        super(ASPPBranch, self).__init__()
+        super(VGGASPPBranch, self).__init__()
 
         self.add_module(f"aspp_layer{start_layer_idx}_{branch_idx}",
                         FCReLUDrop(in_ch, out_ch=1024, kernel_size=3, dilation=rate, padding=rate,
@@ -49,21 +49,21 @@ class ASPPBranch(nn.Sequential):
                 nn.init.constant_(module.bias, 0.0)
 
 
-class ASPP(nn.Module):
+class VGGASPP(nn.Module):
 
     def __init__(self, in_ch, num_classes, rates, start_layer_idx):
-        super(ASPP, self).__init__()
+        super(VGGASPP, self).__init__()
 
         for rate, branch_idx in zip(rates, range(1, len(rates)+1)):
             self.add_module(f"aspp_branch{branch_idx}",
-                            ASPPBranch(in_ch, num_classes, rate, start_layer_idx, branch_idx))
+                            VGGASPPBranch(in_ch, num_classes, rate, start_layer_idx, branch_idx))
 
     def forward(self,x):
         return sum([branch(x) for branch in self.children()])
 
 
 if __name__ == "__main__":
-    aspp = ASPP(512, 21, [6, 12, 18, 24], 6)
+    aspp = VGGASPP(512, 21, [6, 12, 18, 24], 6)
 
     for name, module in aspp.named_modules():
         if "fc8" in name:
@@ -71,3 +71,10 @@ if __name__ == "__main__":
             print(name)
             print(f"Weight std of module is {torch.std(module.weight)}, Weight mean of module is {torch.mean(module.weight)}")
             print(f"Bias sum of the module is {torch.sum(module.bias)}")
+
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter(log_dir="temp")
+
+    writer.add_graph(aspp, input_to_model=torch.randn((10, 512, 41, 41), dtype=torch.float32))
+
+    print("Graph has been writen to the temp dir")
