@@ -29,7 +29,7 @@ class FCReLUDrop(nn.Sequential):
 
 class VGGASPPBranch(nn.Sequential):
 
-    def __init__(self, in_ch, num_classes, rate, start_layer_idx, branch_idx):
+    def __init__(self, in_ch, num_classes, rate, start_layer_idx, branch_idx, net_id):
         super(VGGASPPBranch, self).__init__()
 
         self.add_module(f"aspp_layer{start_layer_idx}_{branch_idx}",
@@ -40,23 +40,26 @@ class VGGASPPBranch(nn.Sequential):
                         FCReLUDrop(in_ch=1024, out_ch=1024, kernel_size=1, dilation=1, padding=0,
                                    layer_idx=start_layer_idx + 1, branch_idx=branch_idx))
 
-        self.add_module(f"fc{start_layer_idx + 2}_{num_classes}_{branch_idx}",
+        self.add_module(f"fc{start_layer_idx + 2}_{net_id}_{branch_idx}",
                         nn.Conv2d(in_channels=1024, out_channels=num_classes, kernel_size=1))
 
-        for module in self.children():
-            if isinstance(module, nn.Conv2d):
-                nn.init.normal_(module.weight, mean=0.0, std=0.01)
-                nn.init.constant_(module.bias, 0.0)
+        # for module in self.children():
+        #     if isinstance(module, nn.Conv2d):
+        #         nn.init.normal_(module.weight, mean=0.0, std=0.01)
+        #         nn.init.constant_(module.bias, 0.0)
+        fc_logit = eval("self." + f"fc{start_layer_idx + 2}_{net_id}_{branch_idx}")
+        nn.init.normal_(fc_logit.weight, mean=0.0, std=0.01)
+        nn.init.constant_(fc_logit.bias, 0.0)
 
 
 class VGGASPP(nn.Module):
 
-    def __init__(self, in_ch, num_classes, rates, start_layer_idx):
+    def __init__(self, in_ch, num_classes, rates, start_layer_idx, net_id="pascal"):
         super(VGGASPP, self).__init__()
 
         for rate, branch_idx in zip(rates, range(1, len(rates)+1)):
             self.add_module(f"aspp_branch{branch_idx}",
-                            VGGASPPBranch(in_ch, num_classes, rate, start_layer_idx, branch_idx))
+                            VGGASPPBranch(in_ch, num_classes, rate, start_layer_idx, branch_idx, net_id))
 
     def forward(self,x):
         return sum([branch(x) for branch in self.children()])
