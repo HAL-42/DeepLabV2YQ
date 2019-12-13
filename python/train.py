@@ -9,7 +9,10 @@
 @desc:
 """
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
+print(f"Current working dir is {os.getcwd()}")
+import sys
+print(f"Current python environment path is\n{sys.path}")
 
 import torch
 import torch.nn as nn
@@ -21,19 +24,27 @@ import torch.nn.functional as F
 from torchnet.meter import MovingAverageValueMeter
 from tqdm import tqdm
 
-from python.data import get_dataset
-from python.models import VOC_VGG16_DeepLabV2
-from python.utils import PolynomialLR, makedirs, get_device
-from python.metric import scores
+from data import get_dataset
+from models import VOC_VGG16_DeepLabV2
+from utils import PolynomialLR, makedirs, get_device
+from metric import scores
 
 
 # Configuration
 with open("configs/train.yaml", 'r') as f:
-    yaml_config = yaml.load(f)
+    yaml_config = yaml.load(f, Loader=yaml.FullLoader)
 CONFIG = Dict(yaml_config)
 
 device = get_device()
 torch.backends.cudnn.benchmark = True
+
+
+def down_sample_labels(labels, logits):
+    labels = torch.unsqueeze(labels, 1)
+    # ! Must Align the Corner. Or the label will be Decimal
+    labels = F.interpolate(labels.float(), logits.size()[-2:], mode="bilinear", align_corners=True)
+    labels = torch.squeeze(labels)
+    return labels.long()
 
 
 def get_train_params(model):
@@ -44,19 +55,20 @@ def get_train_params(model):
             if "weight" in name:
                 params["10xweight"].append(param)
             elif "bias" in name:
-                param["20xbias"].append(param)
+                params["20xbias"].append(param)
             else:
                 print(f"\033[31m Warning: Unrecognized parameter {name}\033[00m")
         else:
             if "weight" in name:
                 params["1xweight"].append(param)
             elif "bias" in name:
-                param["2xbias"].append(param)
+                params["2xbias"].append(param)
             else:
                 print(f"\033[31m Warning: Unrecognized parameter {name}\033[00m")
 
+    return params
 
-def train():
+if __name__ == "__main__":
     """
     Training DeepLab by v2 protocol
     """
@@ -87,12 +99,10 @@ def train():
     model = VOC_VGG16_DeepLabV2()
     state_dict = torch.load(CONFIG.MODEL.INIT_MODEL_FILE)
     print("    Init:", CONFIG.MODEL.INIT_MODEL_FILE)
-    #for m in model.base.state_dict().keys():
     for m in model.state_dict().keys():
         if m not in state_dict.keys():
             print("    Skip init:", m)
-    # model.base.load_state_dict(state_dict, strict=False)  # to skip ASPP
-    model.load_state_dict(state_dict, strict=True)  # to skip ASPP
+    model.load_state_dict(state_dict, strict=True)
     model = nn.DataParallel(model)
     model.to(device)
 
@@ -172,7 +182,9 @@ def train():
             # Propagate forward
             logits = model(images.to(device))
 
-            labels = F.interpolate(labels, logits.size()[-2:], mode="bilinear", align_corners=True)
+            # Down Sample Labels
+            labels = down_sample_labels(labels, logits)
+
             # Loss
             iter_loss = criterion(logits, labels.to(device))
 
@@ -214,5 +226,3 @@ def train():
     )
 
 
-if __name__ == "__main__":
-    train()
