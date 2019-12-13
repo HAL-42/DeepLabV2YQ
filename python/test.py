@@ -9,7 +9,7 @@
 @desc:
 """
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 print(f"Current working dir is {os.getcwd()}")
 import sys
 print(f"Current python environment path is\n{sys.path}")
@@ -70,7 +70,7 @@ def inference(img, model, msc_factors):
     probs = torch.cat(probs, dim=0)
     prob = torch.mean(probs, dim=0).cpu().numpy()
     if CONFIG.CRF.IS_CRF:
-        img = img.cpu().numpy().astype(np.uint8).transpose(1, 2, 0)
+        img = img[0].cpu().numpy().astype(np.uint8).transpose(1, 2, 0)
         prob = postprocessor(img, prob)
     label = np.argmax(prob, axis=0)
     return label
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     model_path = os.path.join("experiment", CONFIG.EXP_ID, "checkpoints", f"checkpoint_{CONFIG.MODEL.TEST_AT}.pth")
     state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
     model.load_state_dict(state_dict, strict=True)
-    model = nn.DataParallel(model)
+    # model = nn.DataParallel(model)
     model.eval()
     model.to(device)
 
