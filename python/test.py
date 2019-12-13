@@ -51,7 +51,7 @@ def inference(img, model, msc_factors):
         scaled_logits = model(batch_X)
 
         scaled_logits[1] = torch.flip(scaled_logits[1], [2])
-        scaled_logit = torch.max(scaled_logits, dim=0, keepdim=True)
+        scaled_logit = torch.max(scaled_logits, dim=0, keepdim=True)[0]
         logit = F.interpolate(scaled_logit, (img_h, img_w), mode="bilinear", align_corners=True)
         logits.append(logit)
 
