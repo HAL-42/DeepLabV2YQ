@@ -39,7 +39,7 @@ SOLVER:
     ITER_SAVE: 5000
     ITER_TB: 20
     LR_DECAY: 10
-    LR: 1e-3
+    LR: 1.0e-3
     MOMENTUM: 0.9
     POLY_POWER: 0.9
     WEIGHT_DECAY: 5.0e-4
