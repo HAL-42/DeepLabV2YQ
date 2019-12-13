@@ -1,0 +1,2 @@
+INIT_MODEL_FILE: "./data/models/init.caffemodel"
+SAVE_MODEL_FILE: "./data/models/init.pth"
