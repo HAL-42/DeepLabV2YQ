@@ -214,7 +214,7 @@ if __name__ == "__main__":
         print("\033[32m[Layer]\033[00m", f"{layer_name} is converted")
 
     print("\033[33mVerify the converted model\033[00m")
-    model.load_state_dict(converted_state_dict, strict=False)
+    model.load_state_dict(converted_state_dict, strict=True)
 
     print(f"Saving to {CONFIG.SAVE_MODEL_FILE}")
     torch.save(converted_state_dict, CONFIG.SAVE_MODEL_FILE)
