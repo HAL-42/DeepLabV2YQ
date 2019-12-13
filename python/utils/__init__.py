@@ -11,6 +11,7 @@
 import torch
 import os
 from .lr_scheduler import PolynomialLR
+from .crf import DenseCRF
 
 def makedirs(dirs):
     if not os.path.exists(dirs):

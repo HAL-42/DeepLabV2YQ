@@ -34,12 +34,12 @@ MODEL:
 SOLVER:
     BATCH_SIZE:
         TEST: 1
-    IS_CRG: true
 
 CRF:
+    IS_CRF: true
     ITER_MAX: 10
     POS_W: 3
-    POS_XY_STD: 1
+    POS_XY_STD: 2
     BI_W: 4
-    BI_XY_STD: 67
+    BI_XY_STD: 65
     BI_RGB_STD: 3

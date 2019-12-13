@@ -23,10 +23,11 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import pprint
 import json
+import numpy as np
 
 from data import get_dataset
 from models import VOC_VGG16_DeepLabV2
-from utils import PolynomialLR, makedirs, get_device
+from utils import PolynomialLR, makedirs, get_device, DenseCRF
 from metric import scores
 
 
@@ -38,6 +39,16 @@ CONFIG = Dict(yaml_config)
 device = get_device()
 torch.set_grad_enabled(False)
 torch.multiprocessing.set_sharing_strategy('file_system')
+
+
+postprocessor = DenseCRF(
+        iter_max=CONFIG.CRF.ITER_MAX,
+        pos_xy_std=CONFIG.CRF.POS_XY_STD,
+        pos_w=CONFIG.CRF.POS_W,
+        bi_xy_std=CONFIG.CRF.BI_XY_STD,
+        bi_rgb_std=CONFIG.CRF.BI_RGB_STD,
+        bi_w=CONFIG.CRF.BI_W,
+    )
 
 
 def inference(img, model, msc_factors):
@@ -57,9 +68,12 @@ def inference(img, model, msc_factors):
         probs.append(prob)
 
     probs = torch.cat(probs, dim=0)
-    prob = torch.mean(probs, dim=0)
-    label = torch.argmax(prob, dim=0)
-    return label.cpu().numpy()
+    prob = torch.mean(probs, dim=0).cpu().numpy()
+    if CONFIG.CRF.IS_CRF:
+        img = img.cpu().numpy().astype(np.uint8).transpose(1, 2, 0)
+        prob = postprocessor(img, prob)
+    label = np.argmax(prob, axis=0)
+    return label
 
 
 if __name__ == "__main__":
@@ -109,13 +123,6 @@ if __name__ == "__main__":
     ):
         # Image
         image = image.to(device)
-
-        # # Forward propagation
-        # logits = model(image)
-        #
-        # # Pixel-wise labeling
-        # probs = F.softmax(logits, dim=1)
-        # labels = torch.argmax(probs, dim=1)
 
         pred = inference(image, model, CONFIG.MODEL.MSC_FACTORS)
 
