@@ -33,7 +33,8 @@ class VOC_VGG16_DeepLabV2(nn.Module):
             in_ch=512,
             num_classes=21,
             rates=[6, 12, 18, 24],
-            start_layer_idx=6
+            start_layer_idx=6,
+            net_id='pascal'
         )
 
     def forward(self, x):
@@ -45,6 +46,11 @@ if __name__ == "__main__":
     from torch.utils.tensorboard import SummaryWriter
 
     voc_vgg16_deeplabV2 = VOC_VGG16_DeepLabV2()
+
+    for name, module in voc_vgg16_deeplabV2.named_modules():
+        print("-----------------------------------------")
+        print(f"Module name is {name}")
+        print(f"Module type is {type(module)}")
 
     with SummaryWriter(log_dir="temp") as writer:
         writer.add_graph(voc_vgg16_deeplabV2, input_to_model=torch.randn((10, 3, 321, 321), dtype=torch.float32))
