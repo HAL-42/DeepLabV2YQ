@@ -11,8 +11,8 @@
 import torch
 from torch import nn
 
-from python.models.vgg_feature import VGGFeature
-from python.models.vgg_ASPP import VGGASPP
+from .vgg_feature import VGGFeature
+from .vgg_ASPP import VGGASPP
 
 
 class VOC_VGG16_DeepLabV2(nn.Module):

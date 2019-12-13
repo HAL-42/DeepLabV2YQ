@@ -15,8 +15,8 @@ import torch
 from addict import Dict
 import yaml
 
-from python.caffe import caffe_pb2
-from python.models import VOC_VGG16_DeepLabV2
+from .caffe import caffe_pb2
+from .models import VOC_VGG16_DeepLabV2
 
 with open("configs/convert.yaml", "r") as f:
     yaml_config = yaml.load(f, Loader=yaml.FullLoader)
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     for layer_name, layer_params in caffe_params.items():
         module_name, module = find_named_module(model, layer_name)
         for layer_param_name, layer_param_value in layer_params.items():
-            module_param_name = module_name + layer_param_name
+            module_param_name = module_name + '.' + layer_param_name
             module_param = eval(f"model.{module_name}.{layer_param_name}")
 
             converted_state_dict[module_param_name] = torch.from_numpy(layer_param_value).view_as(module_param)
