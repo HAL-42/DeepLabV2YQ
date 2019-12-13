@@ -42,7 +42,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 def inference(img, model, msc_factors):
     img_h, img_w = img.size(2), img.size(3)
-    probs = []
+    logits = []
     for factor in msc_factors:
         scaled_img = F.interpolate(img, scale_factor=factor, mode='bilinear', align_corners=True)
         fliped_scaled_img = torch.flip(scaled_img, [3])
@@ -51,13 +51,13 @@ def inference(img, model, msc_factors):
         scaled_logits = model(batch_X)
 
         scaled_logits[1] = torch.flip(scaled_logits[1], [2])
-        scaled_probs = F.softmax(scaled_logits, dim=1)
-        scaled_prob = torch.mean(scaled_probs, dim=0, keepdim=True)
-        prob = F.interpolate(scaled_prob, (img_h, img_w), mode="bilinear", align_corners=True)
-        probs.append(prob)
+        scaled_logit = torch.max(scaled_logits, dim=0, keepdim=True)
+        logit = F.interpolate(scaled_logit, (img_h, img_w), mode="bilinear", align_corners=True)
+        logits.append(logit)
 
-    probs = torch.cat(probs, dim=0)
-    prob = torch.mean(probs, dim=0)
+    logits = torch.cat(logits, dim=0)
+    fused_logit = torch.max(logits, dim=0)[0]
+    prob = F.softmax(fused_logit, dim=0)
     label = torch.argmax(prob, dim=0)
     return label.cpu().numpy()
 
