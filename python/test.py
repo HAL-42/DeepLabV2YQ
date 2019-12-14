@@ -53,22 +53,11 @@ postprocessor = DenseCRF(
 
 def inference(img, model, msc_factors):
     img_h, img_w = img.size(2), img.size(3)
-    probs = []
-    for factor in msc_factors:
-        scaled_img = F.interpolate(img, scale_factor=factor, mode='bilinear', align_corners=True)
-        fliped_scaled_img = torch.flip(scaled_img, [3])
 
-        batch_X = torch.cat([scaled_img, fliped_scaled_img], dim=0)
-        scaled_logits = model(batch_X)
+    logit = model(img)
+    logit = F.interpolate(logit, (img_h, img_w), mode="bilinear", align_corners=True)
+    prob = F.softmax(logit, dim=1)[0].cpu().numpy()
 
-        scaled_logits[1] = torch.flip(scaled_logits[1], [2])
-        scaled_probs = F.softmax(scaled_logits, dim=1)
-        scaled_prob = torch.mean(scaled_probs, dim=0, keepdim=True)
-        prob = F.interpolate(scaled_prob, (img_h, img_w), mode="bilinear", align_corners=True)
-        probs.append(prob)
-
-    probs = torch.cat(probs, dim=0)
-    prob = torch.mean(probs, dim=0).cpu().numpy()
     if CONFIG.CRF.IS_CRF:
         img = img[0].cpu().numpy().astype(np.uint8).transpose(1, 2, 0)
         prob = postprocessor(img, prob)

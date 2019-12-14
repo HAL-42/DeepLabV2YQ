@@ -1,5 +1,5 @@
 EXP_ID: &EXP_ID voc12
-TEST_ID: CRF
+TEST_ID: CRF_NO_MSC_NO_FLIP
 
 DATASET:
     NAME: vocaug
@@ -29,7 +29,7 @@ IMAGE:
 MODEL:
     NET_ID: pascal
     TEST_AT: "final"
-    MSC_FACTORS: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
+    MSC_FACTORS: [1.0]
 
 SOLVER:
     BATCH_SIZE:
