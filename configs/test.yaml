@@ -1,8 +1,8 @@
 EXP_ID: &EXP_ID voc12
-TEST_ID: CRF_NO_MSC_NO_FLIP
+TEST_ID: PW2CRF_NO_AUG_NO_MSC_NO_FLIP
 
 DATASET:
-    NAME: vocaug
+    NAME: voc
     ROOT: ./data/datasets
     # LABELS: ./data/datasets/voc12/labels.txt
     N_CLASSES: 21
@@ -38,7 +38,7 @@ SOLVER:
 CRF:
     IS_CRF: true
     ITER_MAX: 10
-    POS_W: 3
+    POS_W: 2
     POS_XY_STD: 2
     BI_W: 4
     BI_XY_STD: 65
