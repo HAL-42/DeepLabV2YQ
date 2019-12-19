@@ -1,15 +1,15 @@
 EXP_ID: &EXP_ID voc12
-TEST_ID: CRF
+TEST_ID: CRF_NO_AUG
 
 DATASET:
-    NAME: vocaug
+    NAME: voc
     ROOT: ./data/datasets
     # LABELS: ./data/datasets/voc12/labels.txt
     N_CLASSES: 21
     IGNORE_LABEL: 255
     SCALES: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
     SPLIT:
-        TRAIN: train_aug
+        TRAIN: train
         VAL: val
         TEST: test
 
